@@ -5,7 +5,8 @@ import json
 # --- 配置 ---
 target_dir = r"D:\temp"
 output_filename = "extraction_results.json"
-output_path = os.path.join(target_dir, output_filename)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+output_path = os.path.join(script_dir, output_filename)
 # --- 配置 ---
 
 # 定義正規表達式模式
