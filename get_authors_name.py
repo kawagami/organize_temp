@@ -2,8 +2,11 @@ import os
 import re
 import json
 
+# python get_authors_name.py
+
 # --- 配置 ---
-target_dir = r"D:\temp"
+# 使用列表存儲多個目標路徑
+target_dirs = [r"D:\temp", r"C:\comic"]
 output_filename = "extraction_results.json"
 script_dir = os.path.dirname(os.path.abspath(__file__))
 output_path = os.path.join(script_dir, output_filename)
@@ -23,15 +26,18 @@ regex_pattern = re.compile(
     re.IGNORECASE                     
 )
 
-# 儲存最終結果的字典
+# 儲存最終結果的字典（放在迴圈外，確保合併所有路徑的結果）
 results_map = {}
 
-print(f"開始搜尋資料夾: {target_dir} 中的 .zip 檔案...")
+# 遍歷所有的目標路徑
+for target_dir in target_dirs:
+    print(f"正在搜尋資料夾: {target_dir} ...")
 
-# 檢查資料夾是否存在
-if not os.path.isdir(target_dir):
-    print(f"錯誤: 資料夾 {target_dir} 不存在或不是一個目錄。")
-else:
+    # 檢查資料夾是否存在
+    if not os.path.isdir(target_dir):
+        print(f"警告: 資料夾 {target_dir} 不存在，跳過此路徑。")
+        continue
+
     # 遍歷資料夾中的所有項目
     for filename in os.listdir(target_dir):
         # 僅處理以 .zip 結尾的檔案
@@ -44,36 +50,27 @@ else:
                 if match.group(1) is not None:
                     AAA = match.group(1).strip()
                     BBB = match.group(2).strip()
-                    
-                    if AAA:
-                        extracted_strings.append(AAA)
-                    if BBB:
-                        extracted_strings.append(BBB)
+                    if AAA: extracted_strings.append(AAA)
+                    if BBB: extracted_strings.append(BBB)
                 
                 # 模式二: [CCC]
                 elif match.group(3) is not None:
                     CCC = match.group(3).strip()
-                    
-                    if CCC:
-                        extracted_strings.append(CCC)
+                    if CCC: extracted_strings.append(CCC)
 
             # 將結果加入最終的 results_map 
             if extracted_strings:
                  results_map[filename] = extracted_strings
-            
-    # --- 新增的檔案寫入部分 ---
-    try:
-        with open(output_path, 'w', encoding='utf-8') as f:
-            # 使用 json.dump() 直接將 Python 字典寫入檔案
-            json.dump(
-                results_map, 
-                f, 
-                indent=4,              # 保持格式美觀
-                ensure_ascii=False     # 確保中文字元正常寫入
-            )
-        print(f"\n成功將結果寫入檔案: {output_path}")
-    except Exception as e:
-        print(f"\n寫入檔案時發生錯誤: {e}")
-    # --- 檔案寫入結束 ---
 
-print("\n處理完成。")
+# --- 檔案寫入部分 (在所有資料夾掃描完後執行一次) ---
+try:
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(
+            results_map, 
+            f, 
+            indent=4, 
+            ensure_ascii=False 
+        )
+    print(f"\n處理完成！成功將 {len(results_map)} 筆結果寫入檔案: {output_path}")
+except Exception as e:
+    print(f"\n寫入檔案時發生錯誤: {e}")

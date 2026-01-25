@@ -5,7 +5,7 @@
 # 邏輯整理
 
 ## get_authors_name.py
-* 過濾出 D:\temp 資料夾中的作者 or 團體名稱後寫進 extraction_results.json
+* 過濾出 D:\temp & C:\comic 資料夾中的作者 or 團體名稱後寫進 extraction_results.json
 
 ## show_data.py
 * 依照 extraction_results.json 中的資料整理出名稱權重後寫進 value_counts_sorted.json

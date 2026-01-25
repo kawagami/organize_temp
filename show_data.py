@@ -1,6 +1,8 @@
 import os
 import json
 
+# python show_data.py
+
 # 取得此 py 檔案所在資料夾
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
