@@ -3,63 +3,83 @@
 
 import json
 import os
-import re
+import shutil
 
-# from path
+# ==========================================
+# 1. 配置與路徑設定
+# ==========================================
 from_path = r'D:\temp'
-
-# 設定目標根目錄
 base_path = r'C:\comic'
 
-def sanitize_filename(filename):
-    """
-    移除或替換 Windows 中不合法的路徑字元
-    """
-    # Windows 非法字元: \ / : * ? " < > |
-    return re.sub(r'[\\/:*?"<>|]', '_', filename)
+# 確保輸出路徑存在
+if not os.path.exists(base_path):
+    os.makedirs(base_path)
 
-# 1. 讀取 JSON 檔案
-with open('extraction_results.json', 'r', encoding='utf-8') as f:
-    extraction_results = json.load(f)
+# 讀取分析結果
+try:
+    with open('get_authors_name.json', 'r', encoding='utf-8') as f:
+        get_authors_name = json.load(f)
 
-with open('value_counts_sorted.json', 'r', encoding='utf-8') as f:
-    value_counts_sorted = json.load(f)
+    with open('show_data.json', 'r', encoding='utf-8') as f:
+        show_data = json.load(f)
+except FileNotFoundError as e:
+    print(f"[錯誤] 找不到必要的 JSON 檔案: {e}")
+    exit()
 
-for filename, tags in extraction_results.items():
-    # 預設沒對應的資料
-    matched_authors = {}
+# ==========================================
+# 2. 執行「嚴格權重」搬移邏輯
+# ==========================================
+print(f"🚀 開始執行檔案分類 (僅處理有權重的標籤)...\n")
 
-    # 1. 拿 tags 中的每一個 string 出來
+move_count = 0
+skip_count = 0
+
+for filename, tags in get_authors_name.items():
+    source_file = os.path.join(from_path, filename)
+
+    # A. 檢查來源檔案是否存在
+    if not os.path.exists(source_file):
+        continue
+
+    # B. 權重比較：初始值設為 0
+    best_tag = None
+    max_weight = 0  # <--- 修正重點：至少要大於 0 才會被選中
+
     for tag in tags:
-        # 2. 檢查這個 tag 是否存在於 value_counts_sorted 的 key 中
-        if tag in value_counts_sorted:
-            # 3. 存在的話，取得該作者的權重
-            weight = value_counts_sorted[tag]
-            matched_authors[tag] = weight
-            # print(f"檔案: {filename}")
-            # print(f"匹配到作者: {tag}")
-            # print(f"權重: {weight}")
-            # print(f"")
-
-    # 檢查是否有匹配到任何作者
-    if matched_authors:
-        # 使用 max 函數，依據字典的 Value (權重) 找出 Key (作者名)
-        best_author = max(matched_authors, key=matched_authors.get)
-        highest_weight = matched_authors[best_author]
-
-        print(f"🏆 最終決定：")
-        print(f"選擇權重最高的作者: {best_author} (權重: {highest_weight})")
+        weight = show_data.get(tag, 0)
         
-        # 接下來就可以執行你的路徑組合與建立資料夾邏輯
-        target_dir = os.path.join(base_path, sanitize_filename(best_author))
-        # os.makedirs(target_dir, exist_ok=True)
+        # 只有當權重超過目前最大值，且大於 0 時才更新
+        if weight > max_weight:
+            max_weight = weight
+            best_tag = tag
+
+    # C. 根據權重判斷是否執行搬移
+    if best_tag:
+        target_dir = os.path.join(base_path, best_tag)
+        target_file = os.path.join(target_dir, filename)
+
+        # 建立目標資料夾
+        # if not os.path.exists(target_dir):
+        #     # os.makedirs(target_dir)
+        #     print(f"【建立資料夾】{target_dir}")
+
+        try:
+            # shutil.move(source_file, target_file)
+            print(f"【搬移】({max_weight:2d}次) {filename} -> /{best_tag}/")
+            move_count += 1
+        except Exception as e:
+            print(f"【錯誤】無法搬移 {filename}: {e}")
     else:
-        print(f"❌ 檔案 {filename} 沒有匹配到任何已知權重資料。")
+        # 權重為 0 的檔案會留在原地，不建立資料夾
+        # print(f"【跳過】(無權重) {filename}")
+        skip_count += 1
 
-    print("-" * 20)
-
-
-# 該 key 的 values 就是整理出來的作者對應名稱
-# 接著去 value_counts_sorted.json 取名稱權重
-# 取高的建立資料夾
-# 找不到的話就跳過
+# ==========================================
+# 3. 執行結果彙整
+# ==========================================
+print(f"\n" + "="*40)
+print(f"✅ 處理完成！")
+print(f"📦 成功移動檔案：{move_count} 筆")
+print(f"⚠️ 權重不足留原地：{skip_count} 筆")
+print(f"📂 目標根目錄：{base_path}")
+print("="*40)
