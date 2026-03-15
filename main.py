@@ -35,6 +35,9 @@ move_count = 0
 skip_count = 0
 
 for filename, tags in get_authors_name.items():
+    if move_count >=10:
+        break
+
     source_file = os.path.join(from_path, filename)
 
     # A. 檢查來源檔案是否存在
@@ -59,12 +62,11 @@ for filename, tags in get_authors_name.items():
         target_file = os.path.join(target_dir, filename)
 
         # 建立目標資料夾
-        # if not os.path.exists(target_dir):
-        #     # os.makedirs(target_dir)
-        #     print(f"【建立資料夾】{target_dir}")
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
 
         try:
-            # shutil.move(source_file, target_file)
+            shutil.move(source_file, target_file)
             print(f"【搬移】({max_weight:2d}次) {filename} -> /{best_tag}/")
             move_count += 1
         except Exception as e:
