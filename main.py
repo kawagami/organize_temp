@@ -35,7 +35,7 @@ move_count = 0
 skip_count = 0
 
 for filename, tags in get_authors_name.items():
-    if move_count >=10:
+    if move_count >= 500:
         break
 
     source_file = os.path.join(from_path, filename)
